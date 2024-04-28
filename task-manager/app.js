@@ -24,22 +24,22 @@ app.get("/tasks", (req,res)=>{
 
 app.get("/tasks/:id", (req,res) =>{
     const tasks =  tasksConfig;
-    let taskIds  = tasks.filter(task => task.id === parseInt(req.params.id));
+    let taskIds  = tasks.find(task => task.id === parseInt(req.params.id));
     if(!taskIds ||taskIds.length == 0){
         return res.status(404).send("task is not avalible");
     }
-    let jsonString = JSON.stringify(taskIds);
-    res.status(200).send(jsonString);
+    //let jsonString = JSON.stringify(taskIds);
+    res.status(200).send(taskIds);
 });
 
 app.post("/tasks",(req,res) => {
     const tasks =  tasksConfig;
     const parsedBody =  req.body;
     const { title, description,completed} = req.body;
-    if(title && description && typeof completed !== 'undefined'){
+    if(title && description && typeof completed == 'boolean'){
        parsedBody.id = tasks.length+1;
        tasks.push(parsedBody);
-      return res.status(200).send("Task Created Sucessfully");
+      return res.status(201).send("Task Created Sucessfully");
     }else{
         return res.status(400).send("Plese fill mandatory fields");
     }
@@ -53,12 +53,13 @@ app.put("/tasks/:id", (req,res) =>{
         return res.status(404).send("task is not avalible");
     }
     const { title, description,completed} = req.body;
-    if(title && description && typeof completed !== 'undefined'){
+    console.log();
+    if(title && description && typeof completed == 'boolean'){
         taskIds.title = req.body.title;
         taskIds.description = req.body.description;
         taskIds.completed = req.body.completed;
         console.log("updated task",taskIds);
-        res.status(200).send("Task Updated Sucessfully");
+        res.status(200).send(taskIds);
     }else{
         return res.status(400).send("Plese fill mandatory fields");
     }
