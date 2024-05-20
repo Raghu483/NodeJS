@@ -10,6 +10,9 @@ const news = require("./userDetails.json").news;
 const saltRounds = 10;
 const promise = require("Promise");
 const axios = require("axios").default;
+const newsContant = require("./constants/index.js").newsAPIEndpoint;
+const validateToken = require("./util/validator.js").validateToken;
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,9 +32,9 @@ app.post("/users/signup",(req,res)=>  {
     const { name, email,password,preferences} = req.body;
     if(name && email && password && preferences){
         let processSecretKey = process.env.JWT_SECRET_KEY;
-        console.log("processKey",processSecretKey);
+       // console.log("processKey",processSecretKey);
         const token = jwt.sign(password, processSecretKey);
-        console.log("token is",token);
+       // console.log("token is",token);
         const hashedPassword = bcrypt.hashSync(password,saltRounds);
         parsedBody.password = hashedPassword;
         userDetails.push(parsedBody)
@@ -62,37 +65,54 @@ app.post("/users/login",(req,res) => {
               return res.status(401).send("Verify the credentails");
             }
           });
+      }else{
+        return res.status(500).send("Please enter valid email and password");
       }
     }else{
-        return res.send(500).send("Please enter valid email and password");
+        return res.status(500).send("Please enter valid email and password");
     }
 });
-
 app.get("/users/preferences", (req,res) => {
+    if(validateToken(req,res)){
 
+        
+    }else{
+
+
+    }
 });
-app.get("/news",(req,res)=>{
-    getNews().then(data => {
-        console.log(data)
-      })
-      .catch(err => {
-        console.log(err)
-      });
+app.get("/news", async (req,res)=>{
+    if(validateToken(req,res)){
+        await getNews().then(data => {
+            news.push(data);
+            return res.status(200).send(data);
+          })
+          .catch(err => {
+            console.log(err);
+            return res.status(500).send("Error in fetching news");
+          });
+    }else{
+        return res.status(401).send("unAuthriozed");
+    }
+     console.log("get News last=======================");
 });
 
-function getNews(){
-    const customPromise = new Promise((resolve, reject) => {
-        axios.request(options).then(function (response) { 
+  function getNews(){
+    const customPromise =  new Promise((resolve, reject) => {
+        //userDetails.
+        const params = {
+            access_key :process.env.accessKey,
+        };
+        const queryString = new URLSearchParams(params).toString();
+            axios.get(newsContant+'?'+queryString).then(function (response) { 
             var dataFromResponse = response.data; 
-            console.log(dataFromResponse);
-            resolve("Let's go!!");
+            resolve(dataFromResponse);
            }).catch(function (error) { 
-            console.error(error);
-            reject(new Error('Oops!.. Number must be less than 5'));
+            reject('Some error');
            });
       })
       return customPromise
 }
 
-
+console.log("this is last line ================================");
 module.exports = app;
