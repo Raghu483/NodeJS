@@ -11,7 +11,7 @@ const saltRounds = 10;
 const promise = require("Promise");
 const axios = require("axios").default;
 const newsContant = require("./constants/index.js").newsAPIEndpoint;
-const validateToken = require("./util/validator.js").validateToken;
+const authenticateToken = require("./util/validator.js").authenticateToken;
 
 
 app.use(express.json());
@@ -55,7 +55,7 @@ app.post("/users/login",(req,res) => {
               return res.status(500).send("UnExpected Error");
             }
             if (data) {
-                let processSecretKey = process.env.JWT_SECRET_KEY;
+                const processSecretKey = process.env.JWT_SECRET_KEY;
                 console.log("processKey",processSecretKey);
                 const token = jwt.sign(password, processSecretKey);
                 console.log("token is",token);
@@ -72,17 +72,16 @@ app.post("/users/login",(req,res) => {
         return res.status(500).send("Please enter valid email and password");
     }
 });
-app.get("/users/preferences", (req,res) => {
-    if(validateToken(req,res)){
-
-        
-    }else{
-
-
+app.get("/users/preferences", authenticateToken,(req,res) => {
+   return res.send(200).json({'preferences':userDetails.preferences})
+});
+app.put("/users/preferences", authenticateToken,(req,res) => {
+    const {preferences} = req.body;
+    if(preferences){
+        userDetails.preferences.push(preferences);
     }
 });
-app.get("/news", async (req,res)=>{
-    if(validateToken(req,res)){
+app.get("/news", authenticateToken, async (req,res)=>{
         await getNews().then(data => {
             news.push(data);
             return res.status(200).send(data);
@@ -91,15 +90,12 @@ app.get("/news", async (req,res)=>{
             console.log(err);
             return res.status(500).send("Error in fetching news");
           });
-    }else{
-        return res.status(401).send("unAuthriozed");
-    }
+    
      console.log("get News last=======================");
 });
 
   function getNews(){
     const customPromise =  new Promise((resolve, reject) => {
-        //userDetails.
         const params = {
             access_key :process.env.accessKey,
         };
